@@ -18,8 +18,18 @@ repositories {
 }
 
 java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
     withSourcesJar()
     withJavadocJar()
+}
+
+// Ensure Kotlin bytecode is compatible with Java 17+ consumers
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = '17'
+    }
 }
 
 dependencies {
@@ -31,7 +41,7 @@ gradlePlugin {
     plugins {
         create('envfile-spring') {
             id = 'io.github.jaehyunup.envfile-spring'
-            implementationClass = 'io.github.jaehyunup.envfile.EnvFilePlugin'
+            implementationClass = 'io.github.jaehyunup.envfile.spring.EnvFileSpringPlugin'
             displayName = 'envfile-spring'
             description = 'Inject environment variables into Gradle tasks by reading .env/.env.json'
         }
@@ -62,7 +72,7 @@ publishing {
         pom {
             name = 'envfile-spring'
             description = 'Inject environment variables into Gradle tasks by reading .env/.env.json'
-            url = 'https://github.com/jaehyunup/envfile-spring'
+            url = 'https://github.com/jaehyunup/envfile'
 
             licenses {
                 license {
@@ -80,9 +90,9 @@ publishing {
             }
 
             scm {
-                url = 'https://github.com/jaehyunup/envfile-spring'
-                connection = 'scm:git:https://github.com/jaehyunup/envfile-spring.git'
-                developerConnection = 'scm:git:ssh://git@github.com/jaehyunup/envfile-spring.git'
+                url = 'https://github.com/jaehyunup/envfile'
+                connection = 'scm:git:https://github.com/jaehyunup/envfile.git'
+                developerConnection = 'scm:git:ssh://git@github.com/jaehyunup/envfile.git'
             }
         }
     }
@@ -92,8 +102,18 @@ signing {
     // ASCII-armored private key + passphrase via env (recommended for CI)
     def signingKey = System.getenv('SIGNING_KEY')
     def signingPassword = System.getenv('SIGNING_PASSWORD')
+
+    // Only require/sign when keys are present. This keeps `publishToMavenLocal` convenient.
+    required { signingKey != null && signingPassword != null }
+
     if (signingKey != null && signingPassword != null) {
         useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications)
     }
-    sign(publishing.publications)
+}
+
+tasks.withType(Sign).configureEach {
+    onlyIf {
+        System.getenv('SIGNING_KEY') != null && System.getenv('SIGNING_PASSWORD') != null
+    }
 }
