@@ -1,13 +1,11 @@
 # envfile
 
-`.env` / `.env.json` 파일을 읽어  
-Gradle 실행 태스크(`bootRun`, `test`, `JavaExec`)에 **환경 변수를 자동 주입**하는 Gradle 플러그인입니다.
-
+`.env` / `.env.json` 파일을 읽어 Gradle 실행 태스크에 **환경 변수 주입**을 관리해주는  Gradle 플러그인입니다.
 로컬 개발 및 테스트 환경에서 OS 환경 변수를 직접 설정하지 않고도 Spring Boot 애플리케이션을 실행할 수 있습니다.
 
 ---
 
-## Plugin
+## Plugins
 
 | Plugin | Plugin ID | Description |
 |--------|-----------|-------------|
@@ -15,6 +13,7 @@ Gradle 실행 태스크(`bootRun`, `test`, `JavaExec`)에 **환경 변수를 자
 
 ---
 
+# envfile-spring
 ## Getting Started
 
 ```kotlin
@@ -23,37 +22,48 @@ plugins {
 }
 ```
 
-> 로컬에서 테스트할 경우 `settings.gradle(.kts)`에 `mavenLocal()`이 필요합니다.
+<details>
+<summary><strong>Local Maven 저장소에 배포하여 사용하는 방법</strong></summary>
+1. 프로젝트 루트에서 다음 명령어 실행하여 local maven repository에 플러그인 빌드
 
----
-
-## Env File Resolution
-
-루트 프로젝트 기준으로 아래 순서로 `.env*` 파일을 자동 탐색합니다.
-
-```text
-.env.local
-.env
-.env.local.json
-.env.json
+```bash
+./gradlew clean publishToMavenLocal
 ```
 
-- 가장 먼저 발견된 파일 **하나만** 사용
-- 파일이 없으면 아무 동작도 하지 않음
-- dotenv 형식이 JSON 형식보다 항상 우선됩니다
+2. 사용하는 프로젝트의 `settings.gradle(.kts)`에 다음을 추가하고
+```kotlin
+pluginManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+```
+
+3. 플러그인 사용.
+
+```kotlin
+plugins {
+    id("io.github.jaehyunup.envfile-spring") version "0.0.1"
+}
+```
+
+</details>
+
+
 
 ---
-
 ## Supported Formats
 
-### dotenv
+### 1. DOTENV
 
 ```env
 DB_HOST=localhost
 export API_KEY=abcdef
 ```
 
-### JSON
+### 2. JSON
 
 ```json
 {
@@ -64,46 +74,15 @@ export API_KEY=abcdef
 
 ---
 
-## Applied Tasks
+## Mode options
 
-기본적으로 아래 태스크에 env가 주입됩니다.
- 
-- `JavaExec`
-- `Test`
-
-bootRun에만 적용하고 싶은 경우 `ENV_FILE_APPLY_TO_ALL_JAVAEXEC` 환경변수(default: `true`)를 `false`로 설정하여 사용합니다.
-
-```bash
-ENV_FILE_APPLY_TO_ALL_JAVAEXEC=false ./gradlew bootRun
-```
+### 1. `ENV_FILE_APPLY_TO_ALL_JAVAEXEC` (default: true)
+기본적으로 JavaExec 전체에 환경변수 주입이 시도됩니다.   
+이 옵션을 `false`로 변경하면 bootRun/Test Task에만 환경변수 주입이 시도됩니다.
 
 ---
+### 2. `ENV_FILE_OVERRIDE` (default: false)
 
-## Env Override
+기본적으로 OS system environment에 이미 정의 되어있다면 envfile에 정의해둔 값으로 덮어쓰지 않습니다.    
+OS system environment 에 있는 값이더라도 env file 에 선언한 값으로 덮어쓰고 싶다면 이 옵션을 `true`로 설정합니다.
 
-기본적으로 기존 OS 환경 변수는 덮어쓰지 않습니다.
-
-덮어쓰기 모드 활성화 를 원할 경우 `ENV_FILE_OVERRIDE` 환경변수(default: `false`)를 `true`로 설정하여 사용합니다.
-
-```bash
-ENV_FILE_OVERRIDE=true ./gradlew bootRun
-```
-
----
-
-## Multi-module Support
-
-- 멀티모듈 프로젝트의 모든 하위 모듈에 자동 적용
-- env 파일은 항상 **루트 프로젝트 기준**으로 탐색
-
----
-
-## Compatibility
-
-- Java **17 이상** 호환
-
----
-
-## License
-
-MIT
