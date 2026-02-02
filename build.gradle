@@ -1,0 +1,99 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.1.0'
+    id 'java'
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'signing'
+}
+
+
+group = "io.github.jaehyunup"
+version = '0.0.1'
+
+repositories {
+    // for Kotlin stdlib + typical plugin deps
+    mavenCentral()
+    // optional: Gradle plugin portal as a Maven repo
+    gradlePluginPortal()
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+dependencies {
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.17.2")
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+}
+
+gradlePlugin {
+    plugins {
+        create('envfile-spring') {
+            id = 'io.github.jaehyunup.envfile-spring'
+            implementationClass = 'io.github.jaehyunup.envfile.EnvFilePlugin'
+            displayName = 'envfile-spring'
+            description = 'Inject environment variables into Gradle tasks by reading .env/.env.json'
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'InternalNexus'
+            url = uri(System.getenv("NEXUS_URL") ?: "https://nexus.yourorg.in/repository/gradle-plugins/")
+            credentials {
+                username = System.getenv("NEXUS_USER")
+                password = System.getenv("NEXUS_PASS")
+            }
+        }
+        maven {
+            name = 'MavenCentral'
+            // Central Portal / Sonatype (use env vars; default shown is the traditional OSSRH host)
+            url = uri(System.getenv('MAVEN_CENTRAL_URL') ?: 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/')
+            credentials {
+                username = System.getenv('MAVEN_CENTRAL_USER')
+                password = System.getenv('MAVEN_CENTRAL_PASS')
+            }
+        }
+    }
+    publications.withType(MavenPublication).configureEach {
+        pom {
+            name = 'envfile-spring'
+            description = 'Inject environment variables into Gradle tasks by reading .env/.env.json'
+            url = 'https://github.com/jaehyunup/envfile-spring'
+
+            licenses {
+                license {
+                    name = 'The Apache License, Version 2.0'
+                    url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                }
+            }
+
+            developers {
+                developer {
+                    id = 'jaehyunup'
+                    name = 'jaehyunup'
+                    url = 'https://github.com/jaehyunup'
+                }
+            }
+
+            scm {
+                url = 'https://github.com/jaehyunup/envfile-spring'
+                connection = 'scm:git:https://github.com/jaehyunup/envfile-spring.git'
+                developerConnection = 'scm:git:ssh://git@github.com/jaehyunup/envfile-spring.git'
+            }
+        }
+    }
+}
+
+signing {
+    // ASCII-armored private key + passphrase via env (recommended for CI)
+    def signingKey = System.getenv('SIGNING_KEY')
+    def signingPassword = System.getenv('SIGNING_PASSWORD')
+    if (signingKey != null && signingPassword != null) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
+    sign(publishing.publications)
+}
