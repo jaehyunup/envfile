@@ -1,3 +1,3 @@
 package io.github.jaehyunup.envfile.extensions
 
-fun Map<String, String>.onlyMissingEnv() = filterKeys { System.getenv(it) == null }
+fun Map<String, String>.onlyMissingOnSystemEnv() = filterKeys { System.getenv(it) == null }
