@@ -190,3 +190,57 @@ With this configuration, the load order becomes:
 - OS system environment variables are **never overridden**
 - This plugin affects only **JavaExec-based tasks**
   (e.g. `bootRun`, `run`, and custom JavaExec tasks)
+
+
+### Using with IntelliJ IDEA
+
+This plugin is designed as a **Gradle plugin** that injects environment variables
+when **Gradle JavaExec-based tasks** (`bootRun`, `run`, `test`) are executed.
+
+Because of this design, running an application using IntelliJ’s default
+**Spring Boot / Application Run Configuration** will **not apply envfile injection**.
+In that mode, IntelliJ launches the JVM process directly without going through Gradle,
+so the plugin has no execution point where it can inject environment variables.
+
+Therefore, to use the envfile plugin correctly in IntelliJ,
+you **must create a dedicated Run/Debug Configuration that executes a Gradle task**.
+
+---
+
+#### Recommended Setup
+
+1. Open **Run / Debug Configurations**
+2. Click the `+` button and select **Gradle**
+3. Configure the following fields:
+
+- **Gradle project**: Select the root project
+- **Tasks**:
+
+  **Single-module project**
+  ```text
+  bootRun
+  ```
+
+  **Multi-module project**
+  (example: the executable module name is `example`)
+  ```text
+  :example:bootRun
+  ```
+
+- *(Optional)* If you want to specify a Spring profile:
+  - **Environment variables**
+    ```text
+    SPRING_PROFILES_ACTIVE=local
+    ```
+  - or **Arguments**
+    ```text
+    --args="--spring.profiles.active=local"
+    ```
+
+With this configuration, even when running from IntelliJ,
+the execution flow remains:
+
+**Gradle bootRun → envfile plugin → application startup**
+
+ensuring consistent environment variable injection across CLI and IDE runs.
+
