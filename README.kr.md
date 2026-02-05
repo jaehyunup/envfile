@@ -49,9 +49,39 @@ plugins {
   - 덮어씌움 우선순위에 대한 자세한 내용은 이 [섹션](#지원-파일-우선순위)을 참고하세요.
 
 
-
 > envfile-spirng 은 어떠한 일이 있어도 시스템 환경변수를 절대로 덮어씌우지 않습니다.
 
+
+### 3. 사용 예시
+
+**env file**
+- .env.json (Json style)
+```text
+JSON Style
+{
+    "DB_HOST": "localhost",
+    "DB_PORT": "3306",
+    "DB_NAME": "mydatabase",
+    "DB_USER": "username",
+    "DB_PASSWORD": "password"
+}
+```
+
+- .env (DOTENV style)
+```text
+  DB_HOST=localhost
+  DB_PORT=3306
+```
+
+
+**application.yml**
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+```
 
 
 ---
