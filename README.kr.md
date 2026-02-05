@@ -22,6 +22,12 @@
 |--------|-----------|-------------|
 | envfile-spring | `io.github.jaehyunup.envfile-spring` | Spring Boot / JVM 실행 태스크에 env 주입 |
 
+
+| Versions | Note                  |
+|----------|-----------------------|
+| 1.0.0    | release base features |
+
+
 ---
 
 ## 시작하기
@@ -29,7 +35,7 @@
 ### 1. build.gradle(kts) 에 플러그인 추가
 ```kotlin
 plugins {
-    id("io.github.jaehyunup.envfile-spring") version "0.0.1"
+    id("io.github.jaehyunup.envfile-spring") version "1.0.0"
 }
 ```
 

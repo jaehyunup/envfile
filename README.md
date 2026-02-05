@@ -24,6 +24,11 @@
 |------|-----------|-------------|
 | envfile-spring | `io.github.jaehyunup.envfile-spring` | Injects environment variables into Spring Boot / JVM execution tasks |
 
+
+| Versions | Note                  |
+|----------|-----------------------|
+| 1.0.0    | release base features |
+
 ---
 
 ## Getting Started
@@ -34,7 +39,7 @@ Add the plugin to your `build.gradle` or `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("io.github.jaehyunup.envfile-spring") version "0.0.1"
+    id("io.github.jaehyunup.envfile-spring") version "1.0.0"
 }
 ```
 
