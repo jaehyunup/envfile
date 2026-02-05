@@ -4,11 +4,12 @@ plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
     id 'signing'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
 }
 
 
 group = "io.github.jaehyunup"
-version = '0.0.1'
+version = '1.0.0'
 
 repositories {
     // for Kotlin stdlib + typical plugin deps
@@ -51,23 +52,16 @@ gradlePlugin {
 publishing {
     repositories {
         maven {
-            name = 'InternalNexus'
-            url = uri(System.getenv("NEXUS_URL") ?: "https://nexus.yourorg.in/repository/gradle-plugins/")
-            credentials {
-                username = System.getenv("NEXUS_USER")
-                password = System.getenv("NEXUS_PASS")
-            }
-        }
-        maven {
             name = 'MavenCentral'
             // Central Portal / Sonatype (use env vars; default shown is the traditional OSSRH host)
-            url = uri(System.getenv('MAVEN_CENTRAL_URL') ?: 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/')
+            url = uri(System.getenv('MAVEN_CENTRAL_URL'))
             credentials {
                 username = System.getenv('MAVEN_CENTRAL_USER')
                 password = System.getenv('MAVEN_CENTRAL_PASS')
             }
         }
     }
+
     publications.withType(MavenPublication).configureEach {
         pom {
             name = 'envfile-spring'
@@ -76,8 +70,8 @@ publishing {
 
             licenses {
                 license {
-                    name = 'The Apache License, Version 2.0'
-                    url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                    name = 'MIT License'
+                    url = 'https://opensource.org/licenses/MIT'
                 }
             }
 
@@ -94,6 +88,18 @@ publishing {
                 connection = 'scm:git:https://github.com/jaehyunup/envfile.git'
                 developerConnection = 'scm:git:ssh://git@github.com/jaehyunup/envfile.git'
             }
+        }
+    }
+}
+
+// Nexus Publish Plugin: handles Sonatype staging/close/release for Maven Central
+nexusPublishing {
+    repositories {
+        sonatype {
+            // Central Portal (OSSRH Staging API compatibility endpoints)
+            nexusUrl.set(uri(System.getenv('MAVEN_CENTRAL_NEXUS_URL')))
+            username.set(System.getenv('MAVEN_CENTRAL_USER'))
+            password.set(System.getenv('MAVEN_CENTRAL_PASS'))
         }
     }
 }

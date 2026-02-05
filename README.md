@@ -1,69 +1,78 @@
-# envfile
+# envfile-spring
 
-`.env` / `.env.json` 파일을 읽어 Gradle 실행 태스크에 **환경 변수 주입**을 관리해주는  Gradle 플러그인입니다.
-로컬 개발 및 테스트 환경에서 OS 환경 변수를 직접 설정하지 않고도 Spring Boot 애플리케이션을 실행할 수 있습니다.
+🌏 **Languages**: [한국어](README.kr.md) | English
 
 ---
 
-## Plugins
+> 💡 **Why envfile-spring?**
+>
+> envfile-spring is built for teams that want to manage environment variables
+> using **JSON as a first-class configuration format**.
+>
+> Instead of treating `.env.json` as an afterthought, this plugin embraces
+> structured configuration and integrates it naturally into Gradle-based
+> execution environments.
+>
+> * System environment variables are never overridden
+> * JSON-based envfiles have the highest priority by default
+
+---
+
+## Plugin Specification
 
 | Plugin | Plugin ID | Description |
-|--------|-----------|-------------|
-| envfile-spring | `io.github.jaehyunup.envfile-spring` | Spring Boot / JVM 실행 태스크에 env 주입 |
+|------|-----------|-------------|
+| envfile-spring | `io.github.jaehyunup.envfile-spring` | Injects environment variables into Spring Boot / JVM execution tasks |
 
 ---
 
-# envfile-spring
 ## Getting Started
 
-```kotlin
-plugins {
-    id("io.github.jaehyunup.envfile-spring") version "0.0.1"
-}
-```
+### 1. Apply the plugin
 
-<details>
-<summary><strong>Local Maven 저장소에 배포하여 사용하는 방법</strong></summary>
-1. 프로젝트 루트에서 다음 명령어 실행하여 local maven repository에 플러그인 빌드
-
-```bash
-./gradlew clean publishToMavenLocal
-```
-
-2. 사용하는 프로젝트의 `settings.gradle(.kts)`에 다음을 추가하고
-```kotlin
-pluginManagement {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
-```
-
-3. 플러그인 사용.
+Add the plugin to your `build.gradle` or `build.gradle.kts` file:
 
 ```kotlin
 plugins {
     id("io.github.jaehyunup.envfile-spring") version "0.0.1"
 }
 ```
-
-</details>
-
-
 
 ---
-## Supported Formats
 
-### 1. DOTENV
+### 2. Create envfiles in the project root
 
-```env
-DB_HOST=localhost
-export API_KEY=abcdef
+Place your envfiles in the **project root directory**:
+
+```text
+<project-root>
+├─ build.gradle.kts
+├─ settings.gradle.kts
+├─ .env
+├─ .env.local
+├─ .env.json
+└─ .env.local.json
 ```
 
-### 2. JSON
+Only existing files are loaded; missing files are safely ignored.
+
+> ⚠️ envfile-spring **never overrides OS-level system environment variables**.
+
+---
+
+## Environment Variable Files
+
+envfile-spring automatically detects envfiles in the project root directory
+based on predefined naming conventions.
+
+---
+
+## Supported File Styles
+
+### JSON Style (Primary Feature)
+
+JSON-based envfiles allow **structured, explicit, and scalable**
+environment configuration.
 
 ```json
 {
@@ -72,17 +81,112 @@ export API_KEY=abcdef
 }
 ```
 
+Supported filenames:
+- `.env.json`
+- `.env.local.json`
+
+> 💡 Supporting JSON envfiles as **first-class configuration** is a core design
+> goal of this plugin.
+
 ---
 
-## Mode options
+### DOTENV Style
 
-### 1. `ENV_FILE_APPLY_TO_ALL_JAVAEXEC` (default: true)
-기본적으로 JavaExec 전체에 환경변수 주입이 시도됩니다.   
-이 옵션을 `false`로 변경하면 bootRun/Test Task에만 환경변수 주입이 시도됩니다.
+Traditional key-value envfile format, compatible with existing dotenv workflows.
+The `export` syntax is fully supported.
+
+```env
+DB_HOST=localhost
+export API_KEY=abcdef
+```
+
+Supported filenames:
+- `.env`
+- `.env.local`
 
 ---
-### 2. `ENV_FILE_OVERRIDE` (default: false)
 
-기본적으로 OS system environment에 이미 정의 되어있다면 envfile에 정의해둔 값으로 덮어쓰지 않습니다.    
-OS system environment 에 있는 값이더라도 env file 에 선언한 값으로 덮어쓰고 싶다면 이 옵션을 `true`로 설정합니다.
+## Supported File Priority
 
+When multiple envfiles are present, the final value is resolved using
+a **two-level priority model**.
+
+---
+
+### 1️⃣ Filename Priority (`.local` > base)
+
+Within the same file style, `.local` files always take precedence
+over base files.
+
+```text
+.env            → lower
+.env.local      → higher
+
+.env.json       → lower
+.env.local.json → higher
+```
+
+This rule is **always enforced** and cannot be overridden.
+
+---
+
+### 2️⃣ Style Priority (JSON vs DOTENV)
+
+By default, **JSON-style envfiles have higher priority** than dotenv files.
+
+Default load order:
+
+```text
+.env
+.env.local
+.env.json
+.env.local.json
+```
+
+If the same key exists in multiple files,
+the value from the **last loaded file** is used.
+
+---
+
+## Customizing Style Priority (DSL)
+
+Style priority can be customized via **Gradle DSL**.
+
+### Kotlin DSL (`build.gradle.kts`)
+
+```kotlin
+envfileSpring {
+    priority.set(EnvFileStyle.DOTENV)
+}
+```
+
+### Groovy DSL (`build.gradle`)
+
+```groovy
+import io.github.jaehyunup.envfile.spring.enums.EnvFileStyle
+
+envfileSpring {
+    priority = EnvFileStyle.DOTENV
+}
+```
+
+With this configuration, the load order becomes:
+
+```text
+.env.json
+.env.local.json
+.env
+.env.local
+```
+
+> 📌 The `.local` > base rule is always preserved,
+> regardless of DSL configuration.
+
+---
+
+## Notes
+
+- Priority is configurable **only via Gradle DSL**
+- OS system environment variables are **never overridden**
+- This plugin affects only **JavaExec-based tasks**
+  (e.g. `bootRun`, `run`, and custom JavaExec tasks)
