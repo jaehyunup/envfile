@@ -217,3 +217,47 @@ envfileSpring {
 - `.local` > `base` (파일 명 우선순위) 규칙은 항상 유지되며 변경할 수 없습니다
 - 우선순위는 **Gradle DSL로만 설정할 수 있습니다**
 - OS 시스템 환경 변수는 **절대 덮어쓰지 않습니다**
+
+
+---
+### IntelliJ 와 함께 사용하기
+
+이 플러그인은 **Gradle의 JavaExec 기반 태스크**(`bootRun`, `run`, `test`)가 실행될 때
+환경 변수를 주입하도록 설계된 **Gradle 플러그인**입니다.
+
+따라서 IntelliJ의 기본 **Spring Boot / Application Run Configuration**으로 실행할 경우,
+Gradle을 거치지 않고 IDE가 JVM을 직접 실행하게 되며,
+이 경우 envfile 플러그인이 동작할 지점이 없어 **환경 변수 주입이 적용되지 않습니다**.
+
+이 때문에 IntelliJ에서 제공하는 runtime 위에서 플러그인을 사용하고 싶다면
+**Gradle 태스크를 실행하는 Run/Debug Configuration을 별도로 생성해야 합니다.**
+
+---
+#### 권장 설정 방법
+
+1. `Run / Debug Configurations` 열기
+2. `+` 버튼 클릭 → **Gradle** 선택
+3. 아래와 같이 설정
+
+- **Gradle project**: 루트 프로젝트 선택
+- **Tasks**:
+
+  **단일 모듈 프로젝트인 경우**
+  ```text
+  bootRun
+  ```
+
+  **멀티 모듈 프로젝트인 경우**
+  (예: 실행 모듈 이름이 `example` 인 경우)
+  ```text
+  :example:bootRun
+  ```
+- (선택) Spring profile을 지정하고 싶은 경우
+  - `Environment variables`:
+    ```text
+    SPRING_PROFILES_ACTIVE=local
+    ```
+  - 또는 `Arguments`:
+    ```text
+    --args="--spring.profiles.active=local"
+    ```
