@@ -9,7 +9,7 @@ plugins {
 
 
 group = "io.github.jaehyunup"
-version = '1.0.0'
+version = '1.0.1'
 
 repositories {
     // for Kotlin stdlib + typical plugin deps
@@ -36,6 +36,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 dependencies {
     implementation platform("com.fasterxml.jackson:jackson-bom:2.17.2")
     implementation "com.fasterxml.jackson.core:jackson-databind"
+    testImplementation "org.jetbrains.kotlin:kotlin-test:2.1.0"
 }
 
 gradlePlugin {
@@ -122,4 +123,8 @@ tasks.withType(Sign).configureEach {
     onlyIf {
         System.getenv('SIGNING_KEY') != null && System.getenv('SIGNING_PASSWORD') != null
     }
+}
+
+test {
+    useJUnitPlatform()
 }

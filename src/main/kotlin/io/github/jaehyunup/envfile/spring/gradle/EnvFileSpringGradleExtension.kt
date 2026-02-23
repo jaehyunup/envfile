@@ -7,5 +7,5 @@ import org.gradle.api.provider.Property
 
 abstract class EnvFileSpringGradleExtension @Inject constructor(objects: ObjectFactory) {
     val priority: Property<EnvFileStyle> =
-        objects.property(EnvFileStyle::class.java).convention(EnvFileStyle.DOTENV)
+        objects.property(EnvFileStyle::class.java).convention(EnvFileStyle.JSON)
 }

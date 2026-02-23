@@ -30,22 +30,24 @@ class EnvFileSpringPlugin : Plugin<Project> {
             root.extensions.findByType(EnvFileSpringGradleExtension::class.java)
                 ?: root.extensions.create("envfileSpring", EnvFileSpringGradleExtension::class.java)
 
-        val detectedFiles = detectEnvFiles(project, ext)
+        // IMPORTANT: Defer evaluation until after the build scripts have configured the extension.
+        root.afterEvaluate {
+            val detectedFiles = detectEnvFiles(project, ext)
+            logDetection(project, detectedFiles, ext)
 
-        logDetection(project, detectedFiles, ext)
+            val envMap = loadAndMergeEnv(detectedFiles)
+            val injectEnv = envMap.onlyMissingOnSystemEnv()
 
-        val envMap = loadAndMergeEnv(detectedFiles)
-        val injectEnv = envMap.onlyMissingOnSystemEnv()
-
-        // Apply to root + all subprojects no matter where this plugin is applied
-        project.rootProject.allprojects { p ->
-            p.tasks.withType(JavaExec::class.java).configureEach {
-                logger.debug("[envfileSpring] applying env to JavaExec task: {}", it.name)
-                it.environment(injectEnv)
-            }
-            p.tasks.withType(Test::class.java).configureEach {
-                logger.debug("[envfile] applying env to Test task: {}", it.name)
-                it.environment(injectEnv)
+            // Apply to root + all subprojects no matter where this plugin is applied
+            root.allprojects { p ->
+                p.tasks.withType(JavaExec::class.java).configureEach {
+                    logger.debug("[envfileSpring] applying env to JavaExec task: {}", it.name)
+                    it.environment(injectEnv)
+                }
+                p.tasks.withType(Test::class.java).configureEach {
+                    logger.debug("[envfile] applying env to Test task: {}", it.name)
+                    it.environment(injectEnv)
+                }
             }
         }
     }
@@ -60,7 +62,8 @@ class EnvFileSpringPlugin : Plugin<Project> {
     private fun detectEnvFiles(project: Project, ext: EnvFileSpringGradleExtension): List<EnvSource> {
         val root = project.rootDir
 
-        val priority: EnvFileStyle = if (ext.priority.isPresent) ext.priority.get() else defaultPriority
+        val priority = ext.priority.orNull ?: defaultPriority
+        logger.lifecycle("[envfile] priority.orNull={}", ext.priority.orNull)
 
         val jsonCandidates = listOf(
             EnvSource(File(root, ".env.json"), EnvFileStyle.JSON),
