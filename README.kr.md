@@ -26,6 +26,8 @@
 | Versions | Note                  |
 |----------|-----------------------|
 | 1.0.0    | release base features |
+| 1.0.1    | configuration bugfix |
+
 
 
 ---
